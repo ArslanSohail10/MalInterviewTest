@@ -11,6 +11,10 @@ class LedgerCore(val accountId: String, val currency: Currency) {
     private val feeAssessedDays = mutableSetOf<Int>()
 
     fun processEvent(event: Event) {
+        if (event.instalments > 1) {
+            processInstalments(event)
+            return
+        }
         when (event.type) {
             EventType.CREDIT -> book(event.id, event.amount, event.valueDate, EventType.CREDIT)
             EventType.DEBIT -> book(event.id, event.amount.negate(), event.valueDate, EventType.DEBIT)
@@ -19,6 +23,20 @@ class LedgerCore(val accountId: String, val currency: Currency) {
             EventType.REVERSAL -> reverse(event)
             else -> {}
         }
+    }
+
+    private fun processInstalments(event: Event) {
+        val total = event.amount.value
+        val count = event.instalments
+        val baseAmount = total.divide(BigDecimal(count), currency.precision, RoundingMode.DOWN)
+        var sum = BigDecimal.ZERO
+        
+        for (i in 1 until count) {
+            book("${event.id}-$i", Amount(baseAmount, currency), event.valueDate, event.type)
+            sum += baseAmount
+        }
+        val lastAmount = total - sum
+        book("${event.id}-$count", Amount(lastAmount, currency), event.valueDate, event.type)
     }
 
     private fun book(eventId: String, amount: Amount, valueDate: Int, type: EventType) {
