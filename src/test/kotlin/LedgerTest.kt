@@ -21,7 +21,7 @@ class LedgerTest {
             Event("E7", 5, EventType.DEBIT, "ACC-001", Amount(BigDecimal("620.00"), Currency.AED), 2),
             Event("E8", 5, EventType.AUTHORIZATION, "ACC-001", Amount(BigDecimal("90.00"), Currency.AED), 5, metadata = mapOf("authId" to "Auth-B")),
             Event("E9", 6, EventType.REVERSAL, "ACC-001", Amount(BigDecimal("620.00"), Currency.AED), 2, refId = "E7"),
-            Event("E10", 5, EventType.CREDIT, "ACC-002", Amount(BigDecimal("10.000"), Currency.BHD), 5, metadata = mapOf("instalments" to "3"))
+            Event("E10", 5, EventType.CREDIT, "ACC-002", Amount(BigDecimal("10.000"), Currency.BHD), 5, instalments = 3)
         )
 
         println("=== LEDGER EVENT STREAM REPLAY ===")
@@ -30,18 +30,7 @@ class LedgerTest {
 
             // Replay events scheduled for this day
             events.filter { it.day == day }.forEach { event ->
-                if (event.id == "E10") {
-                    // Split BHD instalment as per REJECTED.md reasoning
-                    val inst1 = Amount(BigDecimal("3.333"), Currency.BHD)
-                    val inst2 = Amount(BigDecimal("3.333"), Currency.BHD)
-                    val inst3 = Amount(BigDecimal("3.334"), Currency.BHD)
-
-                    accounts[event.accountId]?.processEvent(event.copy(id = "E10-1", amount = inst1))
-                    accounts[event.accountId]?.processEvent(event.copy(id = "E10-2", amount = inst2))
-                    accounts[event.accountId]?.processEvent(event.copy(id = "E10-3", amount = inst3))
-                } else {
-                    accounts[event.accountId]?.processEvent(event)
-                }
+                accounts[event.accountId]?.processEvent(event)
             }
 
             // End-of-day reports
