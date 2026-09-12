@@ -25,4 +25,7 @@
 ## 2026-09-12 17:25
 - Final verification of the ledger state at end of Day 6.
 - Ensured commit history is intact and documented according to Deliverable 1 requirements.
+
+## 2026-09-12 17:35
+- Removed `.idea/` configuration and `.gitignore` file as per final cleanup instructions.
 - Readiness for submission confirmed.
