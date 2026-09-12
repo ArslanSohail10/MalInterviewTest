@@ -28,4 +28,7 @@
 
 ## 2026-09-12 17:35
 - Removed `.idea/` configuration and `.gitignore` file as per final cleanup instructions.
+
+## 2026-09-12 17:45
+- Integrated `ReentrantLock` into `LedgerCore.kt` to ensure thread-safe operations on account balances and event processing.
 - Readiness for submission confirmed.

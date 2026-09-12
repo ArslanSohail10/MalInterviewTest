@@ -1,7 +1,10 @@
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class LedgerCore(val accountId: String, val currency: Currency) {
+    private val lock = ReentrantLock()
     private val entries = mutableListOf<LedgerEntry>()
     private val holds = mutableMapOf<String, Hold>()
     private val interestAccruals = mutableListOf<Amount>()
@@ -10,7 +13,7 @@ class LedgerCore(val accountId: String, val currency: Currency) {
     // Track days that have already had fees assessed to avoid duplicates
     private val feeAssessedDays = mutableSetOf<Int>()
 
-    fun processEvent(event: Event) {
+    fun processEvent(event: Event) = lock.withLock {
         if (event.instalments > 1) {
             processInstalments(event)
             return
@@ -30,7 +33,7 @@ class LedgerCore(val accountId: String, val currency: Currency) {
         val count = event.instalments
         val baseAmount = total.divide(BigDecimal(count), currency.precision, RoundingMode.DOWN)
         var sum = BigDecimal.ZERO
-        
+
         for (i in 1 until count) {
             book("${event.id}-$i", Amount(baseAmount, currency), event.valueDate, event.type)
             sum += baseAmount
@@ -66,19 +69,19 @@ class LedgerCore(val accountId: String, val currency: Currency) {
         }
     }
 
-    fun getLedgerBalance(day: Int): Amount {
+    fun getLedgerBalance(day: Int): Amount = lock.withLock {
         var total = BigDecimal.ZERO.setScale(currency.precision)
         entries.filter { it.valueDate <= day }.forEach { total += it.amount.value }
-        return Amount(total, currency)
+        Amount(total, currency)
     }
 
-    fun getAvailableBalance(day: Int): Amount {
+    fun getAvailableBalance(day: Int): Amount = lock.withLock {
         var total = getLedgerBalance(day).value
         holds.values.forEach { total -= it.amount.value }
-        return Amount(total, currency)
+        Amount(total, currency)
     }
 
-    fun endOfDay(day: Int): DailyReport {
+    fun endOfDay(day: Int): DailyReport = lock.withLock {
         val dayFees = mutableListOf<Amount>()
 
         // Rule: Overdraft fee AED 25.00 once per day when closing balance is negative
@@ -127,6 +130,6 @@ class LedgerCore(val accountId: String, val currency: Currency) {
             errors = errors.toList()
         )
         errors.clear() // Clear errors after reporting
-        return report
+        report
     }
 }
