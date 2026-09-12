@@ -4,12 +4,26 @@ An in-memory account ledger implementation in Kotlin.
 
 ## How to Run
 
-1.  Ensure you have a JDK (11+) and Kotlin installed.
-2.  Use the provided Gradle wrapper:
-    ```bash
-    ./gradlew test
-    ```
-3.  The test suite will execute the event stream and print the daily reports to the console.
+### Option 1: Using the provided Runner (Main.kt)
+If you have `kotlinc` installed, you can run the simulation directly:
+```bash
+kotlinc src/main/kotlin/*.kt -include-runtime -d ledger.jar && java -jar ledger.jar
+```
+
+### Option 2: Using Gradle
+If you have Gradle installed:
+```bash
+./gradlew run
+```
+(Note: You may need to add a `java { mainClass = ... }` to `build.gradle.kts` for this to work, or just use `test`).
+
+### Option 3: Running Tests
+```bash
+./gradlew test
+```
+The test suite contains:
+1. `runAssignmentSimulation`: Replays the event stream and prints reports.
+2. `testFailingFeeReversal`: A test designed to fail, revealing the append-only nature of the ledger regarding fees.
 
 ## Reading the Output
 
